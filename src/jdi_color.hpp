@@ -65,16 +65,16 @@ namespace jdi {
   inline Color::Color(Uint8 red,
                       Uint8 green,
                       Uint8 blue,
-                      Uint8 alpha=255) :
+                      Uint8 alpha) :
     r(red),
     g(green),
     b(blue),
     a(alpha) {}
 
   inline Color& Color::set(Uint8 red,
-                      Uint8 green,
-                      Uint8 blue,
-                           Uint8 alpha=255) {
+                           Uint8 green,
+                           Uint8 blue,
+                           Uint8 alpha) {
     r = red;
     g = green;
     b = blue;

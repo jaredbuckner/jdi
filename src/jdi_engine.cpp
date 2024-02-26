@@ -126,15 +126,15 @@ namespace jdi {
     }
   }
 
-  const rgba_type& Engine::getWindowBGColor(window_ptr window) const {
-    static rgba_type black;
+  const Color& Engine::getWindowBGColor(window_ptr window) const {
+    static Color black(0, 0, 0);
 
     auto dataPtr = getDataByWindow(window);
     return(dataPtr == nullptr ? black : dataPtr->bgColor);
   }
 
   void Engine::setWindowBGColor(window_ptr window,
-                                const rgba_type& color) {
+                                const Color& color) {
     auto dataPtr = getDataByWindow(window);
     if(dataPtr != nullptr) { dataPtr->bgColor = color; }
   }
