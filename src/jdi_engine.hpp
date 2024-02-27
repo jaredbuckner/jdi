@@ -36,6 +36,21 @@ namespace jdi {
 
     window_datum_type* getDataByWidget(widget_ptr widget);
     const window_datum_type* getDataByWidget(widget_ptr widget) const;
+
+    void updateRenderer(window_datum_type* dataPtr);
+    
+    void setFullscreen(window_datum_type* dataPtr,
+                       bool enabled);
+    
+    void toggleFullscreen(window_datum_type* dataPtr);
+
+    void resizeWidgets(window_datum_type* dataPtr);
+    void updateWidgets(window_datum_type* dataPtr);
+    
+    window_datum_type* getEventFocus(const SDL_Event& event);
+
+    bool sendEvent(window_datum_type* dataPtr,
+                   SDL_Event* event);
     
     bool _willExit;
     
@@ -83,6 +98,13 @@ namespace jdi {
     void         requestUpdate(window_ptr window);
     void         requestUpdate(widget_ptr widget);
     void         requestUpdateAll();
+
+    void         setFullscreen(window_ptr window,
+                               bool enabled);
+    void         setFullscreen(widget_ptr widget,
+                               bool enabled);
+    void         toggleFullscreen(window_ptr window);
+    void         toggleFullscreen(widget_ptr widget);
     
     void         requestExit();
     
@@ -95,6 +117,10 @@ namespace jdi {
 
 
 
+  inline void Engine::toggleFullscreen(Engine::window_datum_type* dataPtr) {
+    if(dataPtr != nullptr) setFullscreen(dataPtr, !dataPtr->isBorderlessFS);
+  }
+  
   inline bool Engine::hasWindow(window_ptr window) const {
     auto dataPtr = getDataByWindow(window);
 
@@ -160,8 +186,24 @@ namespace jdi {
     if(dataPtr != nullptr) { dataPtr->willUpdate = true; }
   }
   
+  inline void Engine::setFullscreen(window_ptr window,
+                                    bool enabled) {
+    setFullscreen(getDataByWindow(window), enabled);
+  }
+  
+  inline void Engine::setFullscreen(widget_ptr widget,
+                                    bool enabled) {
+    setFullscreen(getDataByWidget(widget), enabled);
+  }
+  
+  inline void Engine::toggleFullscreen(window_ptr window) {
+    toggleFullscreen(getDataByWindow(window));
+  }
+
+  inline void Engine::toggleFullscreen(widget_ptr widget) {
+    toggleFullscreen(getDataByWidget(widget));
+  }
+  
   inline void Engine::requestExit() { _willExit = true; }
-
-
   
 }

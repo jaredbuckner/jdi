@@ -33,11 +33,9 @@ namespace jdi {
 
     renderer_ptr renderer = engine->getRenderer(self);
     if(renderer) {
-      self->onRenderUpdate(renderer);
-
-      for(widget_ptr descendant = self->getFirstDescendant();
-          descendant; descendant = self->getNextDescendant(descendant)) {
-        descendant->onRenderUpdate(renderer);
+      for(widget_ptr iter = getFirstPreOrderDFS();
+          iter; iter = getNextPreOrderDFS(iter)) {
+        iter->onRenderUpdate(renderer);
       }
     }
     
@@ -102,13 +100,59 @@ namespace jdi {
 
   bool Widget::hasChild(widget_ptr child) const { return(false); }
 
-  widget_ptr Widget::getFirstChild() const { return(nullptr); }
+  widget_ptr Widget::getFirstChild(widget_ptr prune) const { return(nullptr); }
 
-  widget_ptr Widget::getNextChild(widget_ptr child) const { return(nullptr); }
+  widget_ptr Widget::getNextChild(widget_ptr child,
+                                  widget_ptr prune) const { return(nullptr); }
 
-  widget_ptr Widget::getFirstDescendant() const { return(nullptr); }
+  widget_ptr Widget::getFirstPreOrderDFS(widget_ptr prune) const {
+    widget_ptr self = _self.lock();
+    return(self == prune ? widget_ptr{} : self);
+  }
 
-  widget_ptr Widget::getNextDescendant(widget_ptr child) const { return(nullptr); }
+  widget_ptr Widget::getNextPreOrderDFS(widget_ptr iter, widget_ptr prune) const {
+    if(iter == nullptr) return(getFirstPreOrderDFS(prune));
+
+    widget_ptr self = _self.lock();
+    widget_ptr last = nullptr;
+
+    while(iter != nullptr && iter != self) {
+      widget_ptr child = iter->getNextChild(last, prune);
+      if(child != nullptr) return(child);
+      
+      last = iter;
+      iter = iter->getParent();
+
+    }
+    return(nullptr);
+  }
+
+  widget_ptr Widget::getFirstPostOrderDFS(widget_ptr prune) const {
+    widget_ptr iter = _self.lock();
+    if(iter == prune) return(nullptr);
+    
+    widget_ptr child = getFirstChild(prune);
+    while(child != nullptr) {
+      iter = child;
+      child = getFirstChild(prune);
+    }
+
+    return(iter);    
+  }
+
+  widget_ptr Widget::getNextPostOrderDFS(widget_ptr iter, widget_ptr prune) const {    
+    if(iter == nullptr) return(getFirstPostOrderDFS(prune));
+
+    widget_ptr self = _self.lock();
+    if(iter == self) return(nullptr);
+    
+    widget_ptr parent = iter->getParent();
+    if(parent == nullptr) return(nullptr);  // This shouldn't happen
+    iter = parent->getNextChild(iter, prune);
+    if(iter == nullptr) return(parent);
+    return(iter->getFirstPostOrderDFS(prune));
+
+  }
   
   widget_ptr Widget::getRoot() const {
     widget_ptr reply = getSelf();

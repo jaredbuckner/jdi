@@ -55,6 +55,134 @@ namespace jdi {
     }
     return(nullptr);
   }
+
+  void Engine::updateRenderer(Engine::window_datum_type* dataPtr) {
+    dataPtr->renderer.reset();  // Destroy the old renderer            
+    dataPtr->renderer
+      = sdl_shared(SDL_CreateRenderer(dataPtr->window.get(),
+                                      -1,   // First matching
+                                      0));  // HW Accellerator requested but not required.
+    
+    safely(SDL_GetRendererOutputSize(dataPtr->renderer.get(),
+                                     &(dataPtr->bbox.w),
+                                     &(dataPtr->bbox.h)));
+    
+    if(dataPtr->root) {
+      for(widget_ptr iter = dataPtr->root->getFirstPreOrderDFS();
+          iter; iter = dataPtr->root->getNextPreOrderDFS(iter)) {
+        iter->onRenderUpdate(dataPtr->renderer);
+      }      
+    }
+    
+    dataPtr->willResize = true;
+    dataPtr->willUpdate = true;
+  }
+  
+  void Engine::setFullscreen(Engine::window_datum_type* dataPtr,
+                             bool enabled) {
+    if(dataPtr != nullptr) {
+      dataPtr->isBorderlessFS = enabled;
+      
+      if(dataPtr->isBorderlessFS) {
+        SDL_SetWindowFullscreen(dataPtr->window.get(),
+                                SDL_WINDOW_FULLSCREEN_DESKTOP);
+      } else {
+        SDL_SetWindowFullscreen(dataPtr->window.get(), 0);      
+      }
+    }
+  }
+
+  void Engine::resizeWidgets(window_datum_type* dataPtr) {
+    if(dataPtr->willResize && dataPtr->root && dataPtr->root->isVisible()) {
+      dataPtr->root->setDrawRect(&(dataPtr->bbox));
+      dataPtr->root->onResize(dataPtr->renderer);
+    }
+    dataPtr->willResize = false;
+  }
+
+  void Engine::updateWidgets(window_datum_type* dataPtr) {
+    if(dataPtr->willUpdate) {
+      SDL_SetRenderDrawColor(dataPtr->renderer.get(),
+                             dataPtr->bgColor.r,
+                             dataPtr->bgColor.g,
+                             dataPtr->bgColor.b,
+                             dataPtr->bgColor.a);
+      safely(SDL_RenderClear(dataPtr->renderer.get()));            
+      if(dataPtr->root && dataPtr->root->isVisible()) {              
+        dataPtr->root->onDraw(dataPtr->renderer);
+      }
+      SDL_RenderPresent(dataPtr->renderer.get());
+    }
+    dataPtr->willUpdate = false;
+  }
+
+  // If the event focuses on a particular window, figure that out and return
+  // the associated datum
+  Engine::window_datum_type* Engine::getEventFocus(const SDL_Event& event) {
+    switch(event.type) {
+    case SDL_WINDOWEVENT:
+      return(getDataByWindowID(event.window.windowID));
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+      return(getDataByWindowID(event.key.windowID));
+    case SDL_TEXTEDITING:
+      return(getDataByWindowID(event.edit.windowID));
+    case SDL_TEXTEDITING_EXT:
+      return(getDataByWindowID(event.editExt.windowID));
+    case SDL_TEXTINPUT:
+      return(getDataByWindowID(event.text.windowID));
+    case SDL_MOUSEMOTION:
+      return(getDataByWindowID(event.motion.windowID));
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+      return(getDataByWindowID(event.button.windowID));
+    case SDL_MOUSEWHEEL:
+      return(getDataByWindowID(event.wheel.windowID));
+    case SDL_FINGERMOTION:
+    case SDL_FINGERDOWN:
+    case SDL_FINGERUP:
+      return(getDataByWindowID(event.tfinger.windowID));
+    case SDL_DROPBEGIN:
+    case SDL_DROPFILE:
+    case SDL_DROPTEXT:
+    case SDL_DROPCOMPLETE:
+      return(getDataByWindowID(event.drop.windowID));
+    default:
+      return(event.type < SDL_USEREVENT ? nullptr : getDataByWindowID(event.user.windowID));
+    }
+  }
+
+
+  bool Engine::sendEvent(Engine::window_datum_type* dataPtr,
+                         SDL_Event* eventPtr) {
+    bool isHalted = false;    
+    if(dataPtr->root) {      
+      widget_ptr focus = dataPtr->focus.lock();
+
+      // Handle focus tree first
+      if(focus) {
+        for(widget_ptr iter = focus->getFirstPostOrderDFS();
+            isHalted == false && iter; iter = focus->getNextPostOrderDFS(iter)) {
+          if(iter->isEnabled()) {
+            isHalted = iter->onEvent(dataPtr->renderer,
+                                     eventPtr);
+          }
+        }
+      }
+
+      // Handle remaining tree with focus pruned
+      for(widget_ptr iter = dataPtr->root->getFirstPostOrderDFS(focus);
+          isHalted == false && iter; iter = dataPtr->root->getNextPostOrderDFS(iter, focus)) {
+        if(iter->isEnabled()) {
+          isHalted = iter->onEvent(dataPtr->renderer,
+                                   eventPtr);
+        }
+      }
+    }
+
+    return(isHalted);
+  }
+  
   
   Engine::Engine() {
     if(getSingletonEngine().lock()) {
@@ -98,21 +226,15 @@ namespace jdi {
     window_ptr window
       = sdl_shared(SDL_CreateWindow(title, x, y, w, h, flags));
 
-    renderer_ptr renderer
-      = sdl_shared(SDL_CreateRenderer(window.get(),
-                                      -1,   // First matching
-                                      0));  // HW Accellerator requested but not required.
-    
-    
-    _windowData.push_back(window_datum_type{window, renderer});
+    _windowData.push_back(window_datum_type{window});
 
-    _windowData.back().bbox.x = 0;
-    _windowData.back().bbox.y = 0;
-    _windowData.back().bgColor.set(255, 0, 255);
+    window_datum_type* dataPtr = &(_windowData.back());
 
-    safely(SDL_GetRendererOutputSize(_windowData.back().renderer.get(),
-                                     &_windowData.back().bbox.w,
-                                     &_windowData.back().bbox.h));
+    dataPtr->bbox.x = 0;
+    dataPtr->bbox.y = 0;
+    dataPtr->bgColor.set(255, 0, 255);
+
+    updateRenderer(dataPtr);
     
     return(window);
   }
@@ -159,10 +281,8 @@ namespace jdi {
       dataPtr->root = widget;
 
       if(widget) {
-        widget->onRenderUpdate(dataPtr->renderer);
-        
-        for(widget_ptr child = widget->getFirstDescendant();
-            child; child = widget->getNextDescendant(child)) {
+        for(widget_ptr child = widget->getFirstPreOrderDFS();
+            child; child = widget->getNextPreOrderDFS(child)) {
           child->onRenderUpdate(dataPtr->renderer);
         }
       }
@@ -209,6 +329,7 @@ namespace jdi {
       data.willUpdate = true;
     }
   }
+    
   
   void Engine::mainLoop() {
     _willExit = false;
@@ -225,17 +346,7 @@ namespace jdi {
       case SDL_KEYUP:
         if(event.key.keysym.sym == SDLK_F11) {
           auto dataPtr = getDataByWindowID(event.key.windowID);
-          if(dataPtr != nullptr) {
-            dataPtr->isBorderlessFS = !dataPtr->isBorderlessFS;
-            if(dataPtr->isBorderlessFS) {
-              SDL_SetWindowFullscreen(dataPtr->window.get(),
-                                      SDL_WINDOW_FULLSCREEN_DESKTOP);
-            } else {
-              SDL_SetWindowFullscreen(dataPtr->window.get(), 0);      
-            }
-          }
-        } else {
-          // Pass the event up the chain, will ya?
+          toggleFullscreen(dataPtr);          
         }
           
         
@@ -258,27 +369,7 @@ namespace jdi {
             {
               auto dataPtr = getDataByWindowID(event.window.windowID);
               if(dataPtr != nullptr) {
-                dataPtr->renderer.reset();  // Destroy the old renderer            
-                dataPtr->renderer
-                  = sdl_shared(SDL_CreateRenderer(dataPtr->window.get(),
-                                                  -1,   // First matching
-                                                  0));  // HW Accellerator requested but not required.
-                
-                safely(SDL_GetRendererOutputSize(dataPtr->renderer.get(),
-                                                 &(dataPtr->bbox.w),
-                                                 &(dataPtr->bbox.h)));
-                
-                if(dataPtr->root) {
-                  dataPtr->root->onRenderUpdate(dataPtr->renderer);
-                  
-                  for(widget_ptr iter = dataPtr->root->getFirstDescendant();
-                      iter; iter = dataPtr->root->getNextDescendant(iter)) {
-                    iter->onRenderUpdate(dataPtr->renderer);
-                  }
-                }
-                
-                dataPtr->willResize = true;
-                dataPtr->willUpdate = true;            
+                updateRenderer(dataPtr);
               }
               break;
             }
@@ -299,25 +390,21 @@ namespace jdi {
       if(_windowData.empty()) {
         _willExit = true;
       } else {
+        window_datum_type* focusDataPtr = getEventFocus(event);
+        bool isHandled=false;
+        
+        if(focusDataPtr != nullptr) {
+          isHandled = sendEvent(focusDataPtr, &event);
+        } else {
+          for(auto& data : _windowData) {
+            if(isHandled) break;
+            isHandled = sendEvent(&data, &event);
+          }
+        }
+        
         for(auto& data : _windowData) {
-          if(data.willResize && data.root && data.root->isVisible()) {
-            data.root->setDrawRect(&data.bbox);
-            data.root->onResize(data.renderer);
-          }
-          data.willResize = false;
-          if(data.willUpdate) {
-            SDL_SetRenderDrawColor(data.renderer.get(),
-                                   data.bgColor.r,
-                                   data.bgColor.g,
-                                   data.bgColor.b,
-                                   data.bgColor.a);
-            safely(SDL_RenderClear(data.renderer.get()));            
-            if(data.root && data.root->isVisible()) {              
-              data.root->onDraw(data.renderer);
-            }
-            SDL_RenderPresent(data.renderer.get());
-          }
-          data.willUpdate = false;
+          resizeWidgets(&data);
+          updateWidgets(&data);          
         }
       }
     }

@@ -119,10 +119,17 @@ namespace jdi {
     ////
     virtual bool hasChildren() const;
     virtual bool hasChild(widget_ptr child) const;
-    virtual widget_ptr getFirstChild() const;
-    virtual widget_ptr getNextChild(widget_ptr child) const;
-    virtual widget_ptr getFirstDescendant() const;
-    virtual widget_ptr getNextDescendant(widget_ptr child) const;
+
+    // Iterate through the child widgets, skipping the prune widget if provided.
+    virtual widget_ptr getFirstChild(widget_ptr prune=nullptr) const;
+    virtual widget_ptr getNextChild(widget_ptr child,
+                                    widget_ptr prune=nullptr) const;
+
+    // Pre-order and Post-order depth-first traversal of the tree
+    widget_ptr getFirstPreOrderDFS(widget_ptr prune=nullptr) const;
+    widget_ptr getNextPreOrderDFS(widget_ptr iter, widget_ptr prune=nullptr) const;
+    widget_ptr getFirstPostOrderDFS(widget_ptr prune=nullptr) const;
+    widget_ptr getNextPostOrderDFS(widget_ptr iter, widget_ptr prune=nullptr) const;
     
     ////
     // Parent -- If a widget has a parent, then parent->hasChild(me) must be
