@@ -74,6 +74,13 @@ namespace jdi {
     // From the bounding box, generate a draw rect which obeys the padding,
     // sizing, and anchors.
     void setDrawRect(const SDL_Rect* boundingRect);
+
+    // All three bools are true if the point is inside the drawRect
+    bool isInside(const SDL_Point* absPtr) const;
+    bool rel2Abs(const SDL_Point* relPtr,
+                 SDL_Point* absPtr) const;
+    bool abs2Rel(const SDL_Point* absPtr,
+                 SDL_Point* relPtr) const;
     
     //
     // Handlers.  Overload as needed.
@@ -169,6 +176,27 @@ namespace jdi {
   inline void Widget::setAnchors(direction_type anchors) { _anchors = anchors; }
 
   inline const SDL_Rect* Widget::getDrawRect() const { return(&_drawRect); }
+
+  inline bool Widget::isInside(const SDL_Point* absPtr) const {
+    return(SDL_PointInRect(absPtr, &_drawRect) == SDL_TRUE);
+  }
+
+  inline bool Widget::rel2Abs(const SDL_Point* relPtr,
+                              SDL_Point* absPtr) const {
+    absPtr->x = relPtr->x + _drawRect.x;
+    absPtr->y = relPtr->y + _drawRect.y;
+
+    return(isInside(absPtr));
+  }
+  
+  inline bool Widget::abs2Rel(const SDL_Point* absPtr,
+                              SDL_Point* relPtr) const {
+    relPtr->x = absPtr->x - _drawRect.x;
+    relPtr->y = absPtr->y - _drawRect.y;
+
+    return(isInside(absPtr));
+  }
+  
   inline widget_ptr Widget::getSelf() const { return(_self.lock()); }
   inline widget_ptr Widget::getParent() const { return(_parent.lock()); }
 

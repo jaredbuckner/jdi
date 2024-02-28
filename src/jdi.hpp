@@ -64,11 +64,17 @@ namespace jdi {
   // An error exception for SDL errors
   ////
   class Error : public std::exception {
+  private:
+    const char* _what;
+    const char* _where;
+    
   public:
+    Error(const char* where=0) throw();
     virtual ~Error() throw();
     virtual const char* what() const throw();
+    const char* where() const throw();
   }; // end class Error
-
+  
 
   
   
@@ -84,7 +90,7 @@ namespace jdi {
   
   // Error
   template <typename V>
-  inline V safely(V value) { if(value < 0) throw(Error()); return(value); }
+  inline V safely(V value, const char* where=0) { if(value < 0) throw(Error(where)); return(value); }
   
   
 } // end namespace jdi

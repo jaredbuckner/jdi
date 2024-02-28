@@ -2,6 +2,8 @@
 // ----
 // Handle SDL init/mainloop/destroy; and other goodies.
 
+#include <SDL_image.h>
+
 #include "jdi.hpp"
 
 namespace jdi {
@@ -73,7 +75,7 @@ namespace jdi {
         iter->onRenderUpdate(dataPtr->renderer);
       }      
     }
-    
+
     dataPtr->willResize = true;
     dataPtr->willUpdate = true;
   }
@@ -93,7 +95,7 @@ namespace jdi {
   }
 
   void Engine::resizeWidgets(window_datum_type* dataPtr) {
-    if(dataPtr->willResize && dataPtr->root && dataPtr->root->isVisible()) {
+    if(dataPtr->willResize && dataPtr->root && dataPtr->root->isVisible()) {      
       dataPtr->root->setDrawRect(&(dataPtr->bbox));
       dataPtr->root->onResize(dataPtr->renderer);
     }
@@ -108,7 +110,7 @@ namespace jdi {
                              dataPtr->bgColor.b,
                              dataPtr->bgColor.a);
       safely(SDL_RenderClear(dataPtr->renderer.get()));            
-      if(dataPtr->root && dataPtr->root->isVisible()) {              
+      if(dataPtr->root && dataPtr->root->isVisible()) {
         dataPtr->root->onDraw(dataPtr->renderer);
       }
       SDL_RenderPresent(dataPtr->renderer.get());
@@ -190,11 +192,12 @@ namespace jdi {
     }
 
     safely(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS));
-    
+    if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG) throw(std::runtime_error("Cannot initialize the image libraries!"));
   }
 
   Engine::~Engine() {
     _windowData.clear();  // Clear window data _before_ shutting down SDL
+    IMG_Quit();
     SDL_Quit();
   }
   
@@ -336,8 +339,8 @@ namespace jdi {
     
     while(!_willExit) {
       SDL_Event event;
-      if(1 != SDL_WaitEvent(&event)) throw(Error());
-      
+      if(1 != SDL_WaitEvent(&event)) throw(Error("SDL_WaitEvent"));
+
       switch(event.type) {
       case SDL_QUIT:
         _willExit = true;
@@ -384,8 +387,9 @@ namespace jdi {
             }
           }
         }
-        //// END WINDOW EVENT SWITCH
+        //// END WINDOW EVENT SWITCH       
       }
+
       
       if(_windowData.empty()) {
         _willExit = true;
@@ -401,7 +405,7 @@ namespace jdi {
             isHandled = sendEvent(&data, &event);
           }
         }
-        
+
         for(auto& data : _windowData) {
           resizeWidgets(&data);
           updateWidgets(&data);          
