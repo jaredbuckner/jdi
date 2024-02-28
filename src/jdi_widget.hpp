@@ -82,10 +82,14 @@ namespace jdi {
     // When the renderer has been updated.  Can be nullptr if there is no
     // longer a renderer.  This is a good time to set up any textures and get
     // them ready for use.
+    //
+    // You are NOT responsible for propagating this to your children
     virtual void onRenderUpdate(renderer_ptr renderer);
 
     // When it's time to draw something.  Renderer is always defined.  Your
     // DrawRect has already been set.  Have at it!
+    //
+    // You ARE responsible for propagating this to your children
     virtual void onDraw(renderer_ptr renderer);
 
     // This lets you know that your size has (potentially) been changed, in
@@ -93,6 +97,9 @@ namespace jdi {
     // actually render anything, though -- you'll get an onDraw if that is
     // needed.  Your new DrawRect size is already ready, already.  Renderer is
     // always defined.
+    //
+    // You ARE responsible for propagating this to your children after you set
+    // their new bounding boxes.
     virtual void onResize(renderer_ptr renderer);
 
     // You are now the most important widget in the world.  Return true to
@@ -106,6 +113,8 @@ namespace jdi {
 
     // Something happened.  You can do something with the information.  Return
     // true if the event should stop propagating, false otherwise.
+    //
+    // You are NOT responsible for propagating this to your children.
     virtual bool onEvent(renderer_ptr renderer,
                          SDL_Event* event);
     
