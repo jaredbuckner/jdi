@@ -181,7 +181,8 @@ namespace jdi {
           newBound.h += rowH;
         }
       }
-      
+
+      childData.widget->setDrawRect(&newBound);
       childData.widget->onResize(renderer);
     }
   }
@@ -224,8 +225,8 @@ namespace jdi {
   bool Grid::attachWidget(widget_ptr child,
                           int row, int col,
                           int rowSpan, int colSpan) {
-    if(!setParent(child)) { return(false); }
-
+    if(!claimChild(child)) { return(false); }
+    
     _children.push_back(child_data{child});
     child_data* dataPtr = &(_children.back());
     dataPtr->loc.x = std::max(0, col);

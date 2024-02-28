@@ -21,20 +21,20 @@ namespace jdi {
     _parent() {
   }
 
-  bool Widget::setParent(widget_ptr parent) {
+  bool Widget::claimChild(widget_ptr child) {    
     engine_ptr engine = Engine::getEngine();
-    widget_ptr self = _self.lock();
+    widget_ptr parent = _self.lock();
     
-    if(_parent.lock() || engine->getWindow(self)) {
+    if(child->_parent.lock() || engine->getWindow(child)) {
       return(false); // Can't reparent
     }
     
-    _parent = parent;
+    child->_parent = parent;
 
-    renderer_ptr renderer = engine->getRenderer(self);
+    renderer_ptr renderer = engine->getRenderer(parent);
     if(renderer) {
-      for(widget_ptr iter = getFirstPreOrderDFS();
-          iter; iter = getNextPreOrderDFS(iter)) {
+      for(widget_ptr iter = child->getFirstPreOrderDFS();
+          iter; iter = child->getNextPreOrderDFS(iter)) {
         iter->onRenderUpdate(renderer);
       }
     }
@@ -112,17 +112,16 @@ namespace jdi {
 
   widget_ptr Widget::getNextPreOrderDFS(widget_ptr iter, widget_ptr prune) const {
     if(iter == nullptr) return(getFirstPreOrderDFS(prune));
-
     widget_ptr self = _self.lock();
     widget_ptr last = nullptr;
 
-    while(iter != nullptr && iter != self) {
+    while(iter != nullptr) {
       widget_ptr child = iter->getNextChild(last, prune);
       if(child != nullptr) return(child);
-      
+
       last = iter;
       iter = iter->getParent();
-
+      if(last == self) break;      
     }
     return(nullptr);
   }
@@ -131,10 +130,10 @@ namespace jdi {
     widget_ptr iter = _self.lock();
     if(iter == prune) return(nullptr);
     
-    widget_ptr child = getFirstChild(prune);
+    widget_ptr child = iter->getFirstChild(prune);
     while(child != nullptr) {
       iter = child;
-      child = getFirstChild(prune);
+      child = iter->getFirstChild(prune);
     }
 
     return(iter);    

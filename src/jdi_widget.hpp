@@ -39,9 +39,9 @@ namespace jdi {
     Widget();
     void setSelf(widget_ptr self);
 
-    // Can only be set once.  Parent must exist.  Widgets which are already a
-    // window root cannot be reparented.
-    bool setParent(widget_ptr parent);
+    // A child can only be claimed once.  Child must exist.  Widgets which are already a
+    // window root cannot become someone else's child.
+    bool claimChild(widget_ptr child);
     
   public:
     virtual ~Widget();
