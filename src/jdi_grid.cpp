@@ -40,7 +40,9 @@ namespace jdi {
 
   void Grid::onDraw(renderer_ptr renderer) {
     for(auto& childData : _children) {
-      childData.widget->onDraw(renderer);
+      if(childData.widget->isVisible()) {
+        childData.widget->onDraw(renderer);
+      }
     }
   }
 
@@ -55,6 +57,8 @@ namespace jdi {
     // Go once through the children, setting widths and heights based on
     // minsize+padding of each single-span widget
     for(auto& childData : _children) {
+      if(!childData.widget->isVisible()) { continue; }
+      
       if(childData.loc.w == 1) {
         int minW = childData.widget->getMinW() + childData.widget->getPadding(JDI_EW);
         int colW = colWidths[childData.loc.x];
@@ -72,6 +76,8 @@ namespace jdi {
     // minsize+padding of each multi-span widget, apportioning space using
     // weights.
     for(auto& childData : _children) {
+      if(!childData.widget->isVisible()) { continue; }
+      
       // Widths
       if(childData.loc.w != 1) {
         int minW = childData.widget->getMinW() + childData.widget->getPadding(JDI_EW);
@@ -160,6 +166,8 @@ namespace jdi {
     
     // Now we have all the data!  Let's size!
     for(auto& childData : _children) {
+      if(!childData.widget->isVisible()) { continue; }
+      
       SDL_Rect newBound = {0,0,0,0};
       int stopX = childData.loc.x + childData.loc.w;
       int stopY = childData.loc.y + childData.loc.h;
@@ -234,12 +242,15 @@ namespace jdi {
     dataPtr->loc.w = std::max(1, colSpan);
     dataPtr->loc.h = std::max(1, rowSpan);
 
-    if(unsigned(dataPtr->loc.w) >= _colWeight.size()) {
-      _colWeight.resize(dataPtr->loc.w+1);
+    unsigned int mX = dataPtr->loc.x + dataPtr->loc.w;
+    unsigned int mY = dataPtr->loc.y + dataPtr->loc.h;
+    
+    if(mX > _colWeight.size()) {
+      _colWeight.resize(mX);
     }
 
-    if(unsigned(dataPtr->loc.h) >= _rowWeight.size()) {
-      _rowWeight.resize(dataPtr->loc.h+1);
+    if(mY >= _rowWeight.size()) {
+      _rowWeight.resize(mY);
     }
     
     return(true);
