@@ -45,10 +45,10 @@ namespace jdi {
   Widget::~Widget() {}
   
   int Widget::getPadding(direction_type direction) const {
-    return((direction & JDI_N ? _padN : 0) +
-           (direction & JDI_S ? _padS : 0) +
-           (direction & JDI_E ? _padE : 0) +
-           (direction & JDI_W ? _padW : 0));
+    return(((direction & JDI_N) ? _padN : 0) +
+           ((direction & JDI_S) ? _padS : 0) +
+           ((direction & JDI_E) ? _padE : 0) +
+           ((direction & JDI_W) ? _padW : 0));
   }
 
   void Widget::setPadding(direction_type direction,
@@ -67,13 +67,13 @@ namespace jdi {
     int extraH = boundingRect->h > height ? boundingRect->h - height : 0;
     
     _drawRect.x
-      = _anchors & JDI_W ? boundingRect->x + _padE           // EW stretch or W anchor
-      : _anchors & JDI_E ? boundingRect->x + _padE + extraW  // E anchor
-      : boundingRect->x + _padE + extraW/2;                  // no anchor (centered)
+      = (_anchors & JDI_W) ? boundingRect->x + _padW           // EW stretch or W anchor
+      : (_anchors & JDI_E) ? boundingRect->x + _padW + extraW  // E anchor
+      : boundingRect->x + _padW + extraW/2;                  // no anchor (centered)
     
     _drawRect.y
-      = _anchors & JDI_N ? boundingRect->y + _padN           // NS stretch or N anchor
-      : _anchors & JDI_S ? boundingRect->y + _padN + extraH  // S anchor
+      = (_anchors & JDI_N) ? boundingRect->y + _padN           // NS stretch or N anchor
+      : (_anchors & JDI_S) ? boundingRect->y + _padN + extraH  // S anchor
       : boundingRect->y + _padN + extraH/2;                  // no anchor (centered)
 
     _drawRect.w

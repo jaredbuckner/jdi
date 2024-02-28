@@ -15,6 +15,7 @@ namespace jdi {
   class Color;
   class Engine;
   class Grid;
+  class Sprite;
   class Widget;
   
   // SDI Handles
@@ -26,6 +27,7 @@ namespace jdi {
   // JDI Handles
   typedef std::shared_ptr<Engine>       engine_ptr;
   typedef std::shared_ptr<Grid>         grid_ptr;
+  typedef std::shared_ptr<Sprite>       sprite_ptr;
   typedef std::shared_ptr<Widget>       widget_ptr;
 
   // JDI Directions
@@ -98,6 +100,7 @@ namespace jdi {
 
 #include "jdi_color.hpp"
 #include "jdi_engine.hpp"
+#include "jdi_sprite.hpp"
 #include "jdi_widget.hpp"
 
 #include "jdi_grid.hpp"

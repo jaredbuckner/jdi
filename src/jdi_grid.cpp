@@ -168,7 +168,7 @@ namespace jdi {
     for(auto& childData : _children) {
       if(!childData.widget->isVisible()) { continue; }
       
-      SDL_Rect newBound = {0,0,0,0};
+      SDL_Rect newBound = {drawRect->x, drawRect->y,0,0};
       int stopX = childData.loc.x + childData.loc.w;
       int stopY = childData.loc.y + childData.loc.h;
       
