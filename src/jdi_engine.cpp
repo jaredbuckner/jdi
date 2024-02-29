@@ -117,6 +117,40 @@ namespace jdi {
     }
     dataPtr->willUpdate = false;
   }
+  
+  void Engine::startAnimateCallback() {
+    if(_animateTimer == 0 &&
+       _ticksPerFrame != 0) {
+      _animateTimer = SDL_AddTimer(_ticksPerFrame,
+                                   *animateCallback,
+                                   this);
+    }
+  }
+  
+  Uint32 Engine::animateCallback(Uint32 interval, void* engine) {
+    // We can't actually draw on this thread.  We'll push a special event onto
+    // the event queue and let the engine handle it when the queue makes it
+    // around.
+    static Uint32 jdiEventType = Engine::getJDIEventType();
+    
+    SDL_Event event;
+    event.type = jdiEventType;
+    event.user.windowID = 0;
+    event.user.code = JDI_ANIMATE;
+    event.user.data1 = nullptr;
+    event.user.data2 = nullptr;
+    SDL_PushEvent(&event);
+    
+    return(static_cast<Engine*>(engine)->_ticksPerFrame);
+  }
+  
+  void Engine::removeAnimateCallback() {
+    if(_animateTimer != 0) {
+      SDL_RemoveTimer(_animateTimer);
+      _animateTimer = 0;
+    }
+  }
+    
 
   // If the event focuses on a particular window, figure that out and return
   // the associated datum
@@ -196,6 +230,7 @@ namespace jdi {
   }
 
   Engine::~Engine() {
+    removeAnimateCallback();  // No reason to animate anything now, is there?
     _windowData.clear();  // Clear window data _before_ shutting down SDL
     IMG_Quit();
     SDL_Quit();
@@ -320,7 +355,7 @@ namespace jdi {
       dataPtr->focus.reset();
     }
   }
-  
+
   void Engine::requestResizeAll() {
     for(auto& data : _windowData) {
       data.willResize = true;
@@ -332,29 +367,38 @@ namespace jdi {
       data.willUpdate = true;
     }
   }
-    
+
+  Uint32 Engine::getJDIEventType() {
+    static Uint32 _jdiEventType = SDL_RegisterEvents(1);
+
+    return(_jdiEventType);
+  }
   
   void Engine::mainLoop() {
+    const Uint32 jdiEventType = getJDIEventType();
+    
     _willExit = false;
     
     while(!_willExit) {
       SDL_Event event;
+
+      startAnimateCallback();
       if(1 != SDL_WaitEvent(&event)) throw(Error("SDL_WaitEvent"));
 
       switch(event.type) {
+        
       case SDL_QUIT:
         _willExit = true;
         break;
-
+        
       case SDL_KEYUP:
         if(event.key.keysym.sym == SDLK_F11) {
           auto dataPtr = getDataByWindowID(event.key.windowID);
           toggleFullscreen(dataPtr);          
         }
-          
+        break;
         
       case SDL_WINDOWEVENT:
-        //// BEGIN WINDOW EVENT SWITCH
         {
           switch(event.window.event) {
           case SDL_WINDOWEVENT_SHOWN:
@@ -387,25 +431,37 @@ namespace jdi {
             }
           }
         }
-        //// END WINDOW EVENT SWITCH       
-      }
+        break;
 
+      default:
+        if(event.type == jdiEventType) {
+          // Animate events are automatically handled as part of checking for
+          // updates.  No need to do anything.  In fact, just firing the event
+          // is the whole point.
+        }
+        
+        
+      }
       
       if(_windowData.empty()) {
         _willExit = true;
       } else {
-        window_datum_type* focusDataPtr = getEventFocus(event);
-        bool isHandled=false;
-        
-        if(focusDataPtr != nullptr) {
-          isHandled = sendEvent(focusDataPtr, &event);
-        } else {
-          for(auto& data : _windowData) {
-            if(isHandled) break;
-            isHandled = sendEvent(&data, &event);
+        if(event.type != jdiEventType) {
+          // Do not propagate jdiEvents to the widgets.
+          
+          window_datum_type* focusDataPtr = getEventFocus(event);
+          bool isHandled=false;
+          
+          if(focusDataPtr != nullptr) {
+            isHandled = sendEvent(focusDataPtr, &event);
+          } else {
+            for(auto& data : _windowData) {
+              if(isHandled) break;
+              isHandled = sendEvent(&data, &event);
+            }
           }
         }
-
+        
         for(auto& data : _windowData) {
           resizeWidgets(&data);
           updateWidgets(&data);          

@@ -3,7 +3,15 @@
 // Declarations for the engine class
 
 namespace jdi {
-    ////
+  ////
+  // JDI event codes
+  ////
+  typedef enum {
+    JDI_ANIMATE = 1,
+  } jdi_event_type;
+  
+  
+  ////
   // The engine.  Its job is to build and tear-down SDL itself, to handle the
   // eventloop, and to associate a root widget with each window.  There's only
   // at most one at a time, so even if you attempt to make more than one, you
@@ -28,6 +36,9 @@ namespace jdi {
 
     window_data_type _windowData;
 
+    Uint32       _ticksPerFrame;
+    SDL_TimerID  _animateTimer;
+
     window_datum_type* getDataByWindow(window_ptr window);
     const window_datum_type* getDataByWindow(window_ptr window) const;
 
@@ -38,14 +49,18 @@ namespace jdi {
     const window_datum_type* getDataByWidget(widget_ptr widget) const;
 
     void updateRenderer(window_datum_type* dataPtr);
-    
+
     void setFullscreen(window_datum_type* dataPtr,
                        bool enabled);
     
     void toggleFullscreen(window_datum_type* dataPtr);
-
+    
     void resizeWidgets(window_datum_type* dataPtr);
     void updateWidgets(window_datum_type* dataPtr);
+
+    void startAnimateCallback();
+    static Uint32 animateCallback(Uint32 interval, void* dummy);
+    void removeAnimateCallback();
     
     window_datum_type* getEventFocus(const SDL_Event& event);
 
@@ -91,6 +106,9 @@ namespace jdi {
     void         setFocus(widget_ptr widget);
     void         clearFocus(window_ptr window);
 
+    Uint32       getFrameRate() const;                // Ticks-per-frame, all windows share
+    void         setFrameRate(Uint32 ticksPerFrame);  // 0 to disable all animation
+    
     void         requestResize(window_ptr window);
     void         requestResize(widget_ptr widget);
     void         requestResizeAll();
@@ -108,9 +126,10 @@ namespace jdi {
     
     void         requestExit();
     
+
     void         mainLoop();  // Do the mainloop until someone requests an exit
     
-    
+    static Uint32     getJDIEventType();
     static engine_ptr getEngine();
     
   }; // end class Engine
@@ -161,7 +180,13 @@ namespace jdi {
 
     return(dataPtr == nullptr ? widget_ptr() : dataPtr->focus.lock());
   }
+  
+  inline Uint32 Engine::getFrameRate() const { return(_ticksPerFrame); }
 
+  inline void Engine::setFrameRate(Uint32 ticksPerFrame) {
+    _ticksPerFrame = ticksPerFrame;
+  }
+    
   inline void Engine::requestResize(window_ptr window) {
     auto dataPtr = getDataByWindow(window);
 
