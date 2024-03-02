@@ -225,7 +225,7 @@ namespace jdi {
       throw(std::logic_error("Cannot have multiple simultaneous JDI Engines!"));
     }
 
-    safely(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS));
+    safely(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS|SDL_INIT_GAMECONTROLLER));
     if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG) throw(std::runtime_error("Cannot initialize the image libraries!"));
   }
 

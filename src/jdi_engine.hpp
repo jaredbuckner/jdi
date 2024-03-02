@@ -39,6 +39,8 @@ namespace jdi {
     Uint32       _ticksPerFrame;
     SDL_TimerID  _animateTimer;
 
+    
+
     window_datum_type* getDataByWindow(window_ptr window);
     const window_datum_type* getDataByWindow(window_ptr window) const;
 

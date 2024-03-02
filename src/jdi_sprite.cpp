@@ -14,18 +14,18 @@ namespace jdi {
                                    int elementW, int elementH) {
     _surface.reset();
     _surface = sdl_shared(sdl_surface);
-    w = (elementW < _surface->w) ? _surface->w : elementW;
-    h = (elementH < _surface->h) ? _surface->h : elementH;
-    rows = _surface->w / w;
-    cols = _surface->h / h;
+    w = (elementW == 0 || _surface->w < elementW) ? _surface->w : elementW;
+    h = (elementH == 0 || _surface->h < elementH) ? _surface->h : elementH;
+    cols = _surface->w / w;
+    rows = _surface->h / h;
     return(_surface);
   }
 
   bool Sprite::getBBox(SDL_Rect* bboxRect, int element) const {
     bool isInRange = (0 <= element && element < rows * cols);
     if(isInRange && bboxRect != nullptr) {
-      bboxRect->x = element % cols;
-      bboxRect->y = element / cols;
+      bboxRect->x = (element % cols) * w;
+      bboxRect->y = (element / cols) * h;
       bboxRect->w = w;
       bboxRect->h = h;
     }
