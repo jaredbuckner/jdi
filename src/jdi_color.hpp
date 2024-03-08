@@ -19,16 +19,22 @@ namespace jdi {
     Color(const Color&) = default;
     Color& operator=(const Color&) = default;
     ~Color() = default;
-
+    
     Color& set(Uint8 red,
                Uint8 green,
                Uint8 blue,
                Uint8 alpha=255);
-
+    
     void fillFromPixel(Uint32 pixel,
                        const SDL_PixelFormat* format);
     Uint32 mapToPixel(const SDL_PixelFormat* format) const;
 
+    SDL_Color getSDL() const;
+    void setSDL(SDL_Color color);
+    
+    static Color black();
+    static Color white();
+    static Color transparent();
     static Color butter0();
     static Color butter1();
     static Color butter2();
@@ -60,7 +66,33 @@ namespace jdi {
   }; // end class Color
 
 
-  inline Color::Color() : r(0), g(0), b(0), a(0) {}
+  // Comparisons
+  inline bool operator==(const Color& a,
+                         const Color& b) {
+    return(a.r == b.r &&
+           a.g == b.g &&
+           a.b == b.b &&
+           a.a == b.a);
+  }
+
+  inline bool operator!=(const Color& a, const Color& b) { return(!(a==b)); }
+  
+  inline bool operator<(const Color& a,
+                        const Color& b) {
+    return(a.r < b.r ||
+           (! (b.r < a.r) &&
+            (a.g < b.g ||
+             (! (b.g < a.g) &&
+              (a.b < b.b ||
+               (! (b.b < a.b) &&
+                a.a < b.a))))));
+  }
+
+  inline bool operator>(const Color& a, const Color& b) { return(b < a); }
+  inline bool operator<=(const Color& a, const Color& b) { return(!(b < a)); }
+  inline bool operator>=(const Color& a, const Color& b) { return(!(a < b)); }
+  
+  inline Color::Color() : r(0), g(0), b(0), a(255) {}
 
   inline Color::Color(Uint8 red,
                       Uint8 green,
@@ -90,7 +122,19 @@ namespace jdi {
   inline Uint32 Color::mapToPixel(const SDL_PixelFormat* format) const {
     return(SDL_MapRGBA(format, r, g, b ,a));
   }
+  
+  inline SDL_Color Color::getSDL() const {
+    SDL_Color reply = SDL_Color{r, g, b, a};
+    return(reply);
+  }
 
+  inline void Color::setSDL(SDL_Color color) {
+    r = color.r; g = color.g; b = color.b, a = color.a;
+  }
+  
+  inline Color Color::black()       { return(Color(0x00, 0x00, 0x00)); }
+  inline Color Color::white()       { return(Color(0xff, 0xff, 0xff)); }
+  inline Color Color::transparent() { return(Color(0x00, 0x00, 0x00, 0x00)); }
   inline Color Color::butter0()     { return(Color(0xc4, 0xa0, 0x00)); }
   inline Color Color::butter1()     { return(Color(0xed, 0xd4, 0x00)); }
   inline Color Color::butter2()     { return(Color(0xfc, 0xe9, 0x4f)); }

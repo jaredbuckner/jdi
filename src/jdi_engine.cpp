@@ -2,7 +2,6 @@
 // ----
 // Handle SDL init/mainloop/destroy; and other goodies.
 
-#include <SDL_image.h>
 
 #include "jdi.hpp"
 
@@ -227,11 +226,13 @@ namespace jdi {
 
     safely(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS|SDL_INIT_GAMECONTROLLER));
     if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG) throw(std::runtime_error("Cannot initialize the image libraries!"));
+    safely(TTF_Init());
   }
 
   Engine::~Engine() {
     removeAnimateCallback();  // No reason to animate anything now, is there?
     _windowData.clear();  // Clear window data _before_ shutting down SDL
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
   }

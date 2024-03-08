@@ -6,6 +6,14 @@
 
 namespace jdi {
 
+  void Deleter::operator()(TTF_Font* font) const {
+    TTF_CloseFont(font);
+  }
+
+  void Deleter::operator()(SDL_Joystick* joystick) const {
+    SDL_JoystickClose(joystick);
+  }
+
   void Deleter::operator()(SDL_Surface* surface) const {
     SDL_FreeSurface(surface);
   }

@@ -8,6 +8,8 @@
 #include <vector>
 
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 namespace jdi {
 
@@ -16,9 +18,12 @@ namespace jdi {
   class Engine;
   class Grid;
   class Sprite;
+  class Text;
   class Widget;
   
   // SDI Handles
+  typedef std::shared_ptr<TTF_Font>     font_ptr;
+  typedef std::shared_ptr<SDL_Joystick> joystick_ptr;
   typedef std::shared_ptr<SDL_Surface>  surface_ptr;
   typedef std::shared_ptr<SDL_Texture>  texture_ptr;
   typedef std::shared_ptr<SDL_Renderer> renderer_ptr;
@@ -55,6 +60,8 @@ namespace jdi {
   ////
   class Deleter {
   public:
+    void operator()(TTF_Font* font) const;
+    void operator()(SDL_Joystick* joystick) const;
     void operator()(SDL_Surface* surface) const;
     void operator()(SDL_Texture* texture) const;
     void operator()(SDL_Renderer* renderer) const;
@@ -94,6 +101,32 @@ namespace jdi {
   template <typename V>
   inline V safely(V value, const char* where=0) { if(value < 0) throw(Error(where)); return(value); }
   
+  // A clipped render copy.  The clip rect is in relation to tgtRect.
+  // Returns true if any portion of src was rendered into tgt.
+  inline bool clipped_render_copy(renderer_ptr renderer,
+                                  texture_ptr texture,
+                                  const SDL_Rect* srcRect,
+                                  const SDL_Rect* tgtRect,
+                                  const SDL_Rect* clipRect) {
+    SDL_Rect maskedTgtRect;
+    if(SDL_IntersectRect(tgtRect, clipRect, &maskedTgtRect)) {
+      SDL_Rect maskedSrcRect;
+      
+      maskedSrcRect.x = (maskedTgtRect.x - tgtRect->x) * srcRect->w / tgtRect->w + srcRect->x;
+      maskedSrcRect.y = (maskedTgtRect.y - tgtRect->y) * srcRect->h / tgtRect->h + srcRect->y;
+      maskedSrcRect.w = maskedTgtRect.w * srcRect->w / tgtRect->w;
+      maskedSrcRect.h = maskedTgtRect.h * srcRect->h / tgtRect->h;
+
+      SDL_RenderCopy(renderer.get(),
+                     texture.get(),
+                     &maskedSrcRect,
+                     &maskedTgtRect);
+      return(true);
+    } else {
+      return(false);
+    }
+  }
+                                  
   
 } // end namespace jdi
 
@@ -101,6 +134,7 @@ namespace jdi {
 #include "jdi_color.hpp"
 #include "jdi_engine.hpp"
 #include "jdi_sprite.hpp"
+#include "jdi_text.hpp"
 #include "jdi_widget.hpp"
 
 #include "jdi_grid.hpp"

@@ -37,6 +37,12 @@ namespace jdi {
                     const SDL_Rect* tgtRect,
                     int element=0) const;
 
+    // Copy the sprite element onto the renderer, clipping it as needed.
+    void clippedRenderCopy(renderer_ptr renderer,
+                           const SDL_Rect* tgtRect,
+                           const SDL_Rect* clipRect,
+                           int element=0) const;
+
 
     static sprite_ptr createFromImage(const char* file,
                                       int elementW = 0,
@@ -75,7 +81,20 @@ namespace jdi {
                      tgtRect);
     }
   }
-  
+
+  inline void Sprite::clippedRenderCopy(renderer_ptr renderer,
+                                        const SDL_Rect* tgtRect,
+                                        const SDL_Rect* clipRect,
+                                        int element) const {
+    SDL_Rect srcRect;
+    if(getBBox(&srcRect, element)) {
+      clipped_render_copy(renderer,
+                          _texture,
+                          &srcRect,
+                          tgtRect,
+                          clipRect);
+    }
+  }
   
 } // end namespace jdi
 

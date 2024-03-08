@@ -2,8 +2,6 @@
 // ----
 // Implementing Sprite!
 
-#include <SDL_image.h>
-
 #include "jdi.hpp"
 
 namespace jdi {
