@@ -87,6 +87,11 @@ namespace jdi {
                                 SDL_Rect* srcMaskRect,
                                 SDL_Rect* tgtMaskRect);
     
+    static sprite_ptr createEmpty(int elementW,
+                                  int elementH,
+                                  int rows,
+                                  int cols);
+    
     static sprite_ptr createFromImage(const char* file,
                                       int elementW = 0,
                                       int elementH = 0);

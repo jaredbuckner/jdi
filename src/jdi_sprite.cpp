@@ -25,41 +25,36 @@ namespace jdi {
                                  Color fg,
                                  Color bg) {
     _surface.reset();
-
+    
     // What to do if text is nothing?  We'll render a single space.
     if(text == nullptr || text[0] == 0) { text = " "; }
     
     if(wrapLength == 0) {
       if(bg == Color::transparent()) {
-        _surface = sdl_shared(TTF_RenderUTF8_Blended(font.get(),
-                                                     text,
-                                                     fg.getSDL()));
+        claimSurface(TTF_RenderUTF8_Blended(font.get(),
+                                            text,
+                                            fg.getSDL()));
       } else {
-        _surface = sdl_shared(TTF_RenderUTF8_LCD(font.get(),
-                                                 text,
-                                                 fg.getSDL(),
-                                                 bg.getSDL()));
+        claimSurface(TTF_RenderUTF8_LCD(font.get(),
+                                        text,
+                                        fg.getSDL(),
+                                        bg.getSDL()));
       }
     } else {
       if(bg == Color::transparent()) {
-        _surface = sdl_shared(TTF_RenderUTF8_Blended_Wrapped(font.get(),
-                                                             text,
-                                                             fg.getSDL(),
-                                                             wrapLength));
+        claimSurface(TTF_RenderUTF8_Blended_Wrapped(font.get(),
+                                                    text,
+                                                    fg.getSDL(),
+                                                    wrapLength));
       } else {
-        _surface = sdl_shared(TTF_RenderUTF8_LCD_Wrapped(font.get(),
-                                                         text,
-                                                         fg.getSDL(),
-                                                         bg.getSDL(),
-                                                         wrapLength));        
+        claimSurface(TTF_RenderUTF8_LCD_Wrapped(font.get(),
+                                                text,
+                                                fg.getSDL(),
+                                                bg.getSDL(),
+                                                wrapLength));        
       }
     }
-
-    _w = _surface->w;
-    _h = _surface->h;
-    _cols = 1;
-    _rows = 1;
-
+    
     return(_surface);
   }
 
@@ -251,6 +246,20 @@ namespace jdi {
     } else {
       return(false);
     }
+  }
+
+  sprite_ptr Sprite::createEmpty(int elementW,
+                                 int elementH,
+                                 int cols,
+                                 int rows) {
+    sprite_ptr reply = sprite_ptr(new Sprite);
+    reply->claimSurface(SDL_CreateRGBSurfaceWithFormat(0,
+                                                       elementW * cols,
+                                                       elementH * rows,
+                                                       32,
+                                                       SDL_PIXELFORMAT_RGBA32),
+                        elementW, elementH);
+    return(reply);
   }
   
   sprite_ptr Sprite::createFromImage(const char* file,
