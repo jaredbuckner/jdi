@@ -134,7 +134,6 @@ namespace jdi {
 #include "jdi_color.hpp"
 #include "jdi_engine.hpp"
 #include "jdi_sprite.hpp"
-#include "jdi_text.hpp"
 #include "jdi_widget.hpp"
 
 #include "jdi_grid.hpp"
