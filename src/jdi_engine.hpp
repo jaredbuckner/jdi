@@ -33,14 +33,18 @@ namespace jdi {
     };
     
     typedef std::vector<window_datum_type> window_data_type;
+    typedef std::vector<joystick_ptr> joystick_seq_type;
 
     window_data_type _windowData;
+    joystick_seq_type _joystickData;
+    bool              _joysticksEnabled;
 
     Uint32       _ticksPerFrame;
     SDL_TimerID  _animateTimer;
 
+    void addJoystick(Uint32 deviceIndex);
+    void removeJoystick(Uint32 instanceID);
     
-
     window_datum_type* getDataByWindow(window_ptr window);
     const window_datum_type* getDataByWindow(window_ptr window) const;
 
@@ -49,7 +53,7 @@ namespace jdi {
 
     window_datum_type* getDataByWidget(widget_ptr widget);
     const window_datum_type* getDataByWidget(widget_ptr widget) const;
-
+    
     void updateRenderer(window_datum_type* dataPtr);
 
     void setFullscreen(window_datum_type* dataPtr,
@@ -59,11 +63,11 @@ namespace jdi {
     
     void resizeWidgets(window_datum_type* dataPtr);
     void updateWidgets(window_datum_type* dataPtr);
-
+    
     void startAnimateCallback();
     static Uint32 animateCallback(Uint32 interval, void* dummy);
     void removeAnimateCallback();
-    
+
     window_datum_type* getEventFocus(const SDL_Event& event);
 
     bool sendEvent(window_datum_type* dataPtr,
@@ -79,6 +83,9 @@ namespace jdi {
     Engine(const Engine&) = delete;
     Engine& operator=(const Engine&) = delete;
 
+    bool areJoysticksEnabled() const;
+    void enableJoysticks(bool enable);
+    
     bool hasWindows() const;
     bool hasWindow(window_ptr window) const;
     window_ptr getFirstWindow() const;
@@ -126,8 +133,7 @@ namespace jdi {
     void         toggleFullscreen(window_ptr window);
     void         toggleFullscreen(widget_ptr widget);
     
-    void         requestExit();
-    
+    void         requestExit();    
 
     void         mainLoop();  // Do the mainloop until someone requests an exit
     
@@ -141,6 +147,8 @@ namespace jdi {
   inline void Engine::toggleFullscreen(Engine::window_datum_type* dataPtr) {
     if(dataPtr != nullptr) setFullscreen(dataPtr, !dataPtr->isBorderlessFS);
   }
+  
+  inline bool Engine::areJoysticksEnabled() const { return(_joysticksEnabled); }
   
   inline bool Engine::hasWindow(window_ptr window) const {
     auto dataPtr = getDataByWindow(window);

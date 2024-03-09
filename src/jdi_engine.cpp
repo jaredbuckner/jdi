@@ -13,6 +13,24 @@ namespace jdi {
     return(_hiddenEngine);
   }
 
+  void Engine::addJoystick(Uint32 deviceIndex) {
+    if(_joysticksEnabled) {
+      _joystickData.push_back(sdl_shared(SDL_JoystickOpen(deviceIndex)));
+    }
+  }
+
+  void Engine::removeJoystick(Uint32 instanceID) {
+    SDL_Joystick* jptr = SDL_JoystickFromInstanceID(instanceID);
+    auto iter = _joystickData.begin();
+    while(iter != _joystickData.end()) {
+      if(iter->get() == jptr) {
+        iter = _joystickData.erase(iter);
+      } else {
+        ++iter;
+      }
+    }
+  }
+  
   Engine::window_datum_type* Engine::getDataByWindow(window_ptr window) {
     for(auto& data : _windowData) {
       if(data.window == window) return (&data);
@@ -219,7 +237,9 @@ namespace jdi {
   }
   
   
-  Engine::Engine() {
+  Engine::Engine() :
+    _joysticksEnabled(false)
+  {    
     if(getSingletonEngine().lock()) {
       throw(std::logic_error("Cannot have multiple simultaneous JDI Engines!"));
     }
@@ -246,6 +266,20 @@ namespace jdi {
     return(reply);
   }
 
+  void Engine::enableJoysticks(bool enable) {
+    if(!enable) {
+      _joystickData.clear();      
+    } else if(_joystickData.empty()) {
+      SDL_LockJoysticks();
+      for(int devIdx = 0; devIdx < SDL_NumJoysticks(); ++devIdx) {
+        _joystickData.push_back(sdl_shared(SDL_JoystickOpen(devIdx)));
+      }
+      SDL_UnlockJoysticks();
+    }
+
+    _joysticksEnabled = enable;
+  }
+  
   window_ptr Engine::getNextWindow(window_ptr window) const {
     if(!window) return(getFirstWindow());
     
@@ -368,7 +402,7 @@ namespace jdi {
       data.willUpdate = true;
     }
   }
-
+  
   Uint32 Engine::getJDIEventType() {
     static Uint32 _jdiEventType = SDL_RegisterEvents(1);
 
@@ -434,6 +468,14 @@ namespace jdi {
         }
         break;
 
+      case SDL_JOYDEVICEADDED:
+        addJoystick(event.jdevice.which);
+        break;
+
+      case SDL_JOYDEVICEREMOVED:
+        removeJoystick(event.jdevice.which);
+        break;
+        
       default:
         if(event.type == jdiEventType) {
           // Animate events are automatically handled as part of checking for
