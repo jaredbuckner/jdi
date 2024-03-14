@@ -85,6 +85,9 @@ namespace jdi {
     safely(SDL_GetRendererOutputSize(dataPtr->renderer.get(),
                                      &(dataPtr->bbox.w),
                                      &(dataPtr->bbox.h)));
+
+    SDL_SetRenderDrawBlendMode(dataPtr->renderer.get(),
+                               SDL_BLENDMODE_BLEND);
     
     if(dataPtr->root) {
       for(widget_ptr iter = dataPtr->root->getFirstPreOrderDFS();
