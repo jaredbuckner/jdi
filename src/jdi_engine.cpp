@@ -214,9 +214,9 @@ namespace jdi {
     bool isHalted = false;    
     if(dataPtr->root) {      
       widget_ptr focus = dataPtr->focus.lock();
-
+      
       // Handle focus tree first
-      if(focus) {
+      if(focus != nullptr) {
         for(widget_ptr iter = focus->getFirstPostOrderDFS();
             isHalted == false && iter; iter = focus->getNextPostOrderDFS(iter)) {
           if(iter->isEnabled()) {
