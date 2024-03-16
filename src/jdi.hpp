@@ -3,6 +3,9 @@
 // Jared's Draw Interface.  This gives me a way to deal with SDI2 that I can
 // understand and manipulate safely.
 
+#ifndef _JDI_HPP_
+#define _JDI_HPP_
+
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -137,3 +140,5 @@ namespace jdi {
 #include "jdi_widget.hpp"
 
 #include "jdi_grid.hpp"
+
+#endif // _JDI_HPP_

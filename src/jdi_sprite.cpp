@@ -10,6 +10,7 @@ namespace jdi {
   
   surface_ptr Sprite::claimSurface(SDL_Surface* sdl_surface,
                                    int elementW, int elementH) {
+    _texture.reset();
     _surface.reset();
     _surface = sdl_shared(sdl_surface);
     _w = (elementW == 0 || _surface->w < elementW) ? _surface->w : elementW;
@@ -24,6 +25,7 @@ namespace jdi {
                                  Uint32 wrapLength,
                                  Color fg,
                                  Color bg) {
+    _texture.reset();
     _surface.reset();
     
     // What to do if text is nothing?  We'll render a single space.
