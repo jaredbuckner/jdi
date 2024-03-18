@@ -13,6 +13,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 
 namespace jdi {
 
@@ -25,11 +26,13 @@ namespace jdi {
   class Widget;
   
   // SDI Handles
+  typedef std::shared_ptr<Mix_Chunk>    chunk_ptr;
   typedef std::shared_ptr<TTF_Font>     font_ptr;
   typedef std::shared_ptr<SDL_Joystick> joystick_ptr;
+  typedef std::shared_ptr<Mix_Music>    music_ptr;
+  typedef std::shared_ptr<SDL_Renderer> renderer_ptr;
   typedef std::shared_ptr<SDL_Surface>  surface_ptr;
   typedef std::shared_ptr<SDL_Texture>  texture_ptr;
-  typedef std::shared_ptr<SDL_Renderer> renderer_ptr;
   typedef std::shared_ptr<SDL_Window>   window_ptr;
 
   // JDI Handles
@@ -63,11 +66,13 @@ namespace jdi {
   ////
   class Deleter {
   public:
+    void operator()(Mix_Chunk* chunk) const;
     void operator()(TTF_Font* font) const;
     void operator()(SDL_Joystick* joystick) const;
+    void operator()(Mix_Music* music) const;
+    void operator()(SDL_Renderer* renderer) const;
     void operator()(SDL_Surface* surface) const;
     void operator()(SDL_Texture* texture) const;
-    void operator()(SDL_Renderer* renderer) const;
     void operator()(SDL_Window* window) const;
   }; // end class Deleter
 

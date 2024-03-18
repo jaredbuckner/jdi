@@ -250,11 +250,17 @@ namespace jdi {
     safely(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS|SDL_INIT_GAMECONTROLLER));
     if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG) throw(std::runtime_error("Cannot initialize the image libraries!"));
     safely(TTF_Init());
+
+    if(Mix_Init(MIX_INIT_OGG) != MIX_INIT_OGG) throw(std::runtime_error("Cannot initialize sound with Ogg Support!"));
+
+    safely(Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 4096));
   }
 
   Engine::~Engine() {
     removeAnimateCallback();  // No reason to animate anything now, is there?
     _windowData.clear();  // Clear window data _before_ shutting down SDL
+    Mix_CloseAudio();
+    Mix_Quit();
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
