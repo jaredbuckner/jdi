@@ -253,7 +253,7 @@ namespace jdi {
 
     if(Mix_Init(MIX_INIT_OGG) != MIX_INIT_OGG) throw(std::runtime_error("Cannot initialize sound with Ogg Support!"));
 
-    safely(Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 4096));
+    safely(Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 1024));
   }
 
   Engine::~Engine() {
