@@ -76,11 +76,18 @@ namespace jdi {
   }
 
   void Engine::updateRenderer(Engine::window_datum_type* dataPtr) {
-    dataPtr->renderer.reset();  // Destroy the old renderer            
-    dataPtr->renderer
-      = sdl_shared(SDL_CreateRenderer(dataPtr->window.get(),
-                                      -1,   // First matching
-                                      0));  // HW Accellerator requested but not required.
+    SDL_Renderer* renderer = SDL_GetRenderer(dataPtr->window.get());
+
+    if(!renderer) {
+      renderer = SDL_CreateRenderer(dataPtr->window.get(),
+                                    -1,   // First matching
+                                    0);  // HW Accellerator requested but not required.
+    }
+
+    if(dataPtr->renderer.get() != renderer) {
+      dataPtr->renderer
+        = sdl_shared(renderer);  // HW Accellerator requested but not required.
+    }
     
     safely(SDL_GetRendererOutputSize(dataPtr->renderer.get(),
                                      &(dataPtr->bbox.w),
