@@ -30,6 +30,27 @@ namespace jdi {
       }
     }
   }
+
+  void Engine::registerApp(const char* org,
+                           const char* app) {
+    char* sdl_string;
+
+    sdl_string = SDL_GetBasePath();
+    if(sdl_string == nullptr) {
+      _basePath = ".";
+    } else {
+      _basePath = sdl_string;
+      SDL_free(sdl_string);
+    }
+
+    sdl_string = SDL_GetPrefPath(org, app);
+    if(sdl_string == nullptr) {
+      _prefPath = ""; // Yikes!
+    } else {
+      _prefPath = sdl_string;
+      SDL_free(sdl_string);
+    }
+  }
   
   Engine::window_datum_type* Engine::getDataByWindow(window_ptr window) {
     for(auto& data : _windowData) {
