@@ -30,6 +30,9 @@ namespace jdi {
       bool                   isBorderlessFS;
       bool                   willResize;
       bool                   willUpdate;
+      Uint64                 penultimateUpdateHRC;  // High-resolution counters
+      Uint64                 ultimateUpdateHRC;
+      Uint64                 intraUpdateHRC;
     };
     
     typedef std::vector<window_datum_type> window_data_type;
@@ -125,6 +128,9 @@ namespace jdi {
 
     Uint32       getFrameRate() const;                // Ticks-per-frame, all windows share
     void         setFrameRate(Uint32 ticksPerFrame);  // 0 to disable all animation
+
+    Uint64       getFPS(window_ptr window) const;     // The actual FPS drawn
+    Uint64       getDrawTimeUSec(window_ptr window) const;  // An estimate of the window draw time, in microseconds.
     
     void         requestResize(window_ptr window);
     void         requestResize(widget_ptr widget);

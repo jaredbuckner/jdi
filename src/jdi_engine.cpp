@@ -152,6 +152,9 @@ namespace jdi {
 
   void Engine::updateWidgets(window_datum_type* dataPtr) {
     if(dataPtr->willUpdate) {
+      dataPtr->penultimateUpdateHRC = dataPtr->ultimateUpdateHRC;
+      dataPtr->ultimateUpdateHRC = SDL_GetPerformanceCounter();
+      
       SDL_SetRenderDrawColor(dataPtr->renderer.get(),
                              dataPtr->bgColor.r,
                              dataPtr->bgColor.g,
@@ -162,6 +165,7 @@ namespace jdi {
         dataPtr->root->onDraw(dataPtr->renderer);
       }
       SDL_RenderPresent(dataPtr->renderer.get());
+      dataPtr->intraUpdateHRC = SDL_GetPerformanceCounter() - dataPtr->ultimateUpdateHRC;
     }
     dataPtr->willUpdate = false;
   }
@@ -434,6 +438,20 @@ namespace jdi {
     }
   }
 
+  Uint64 Engine::getFPS(window_ptr window) const {
+    auto dataPtr = getDataByWindow(window);
+
+    return(dataPtr == nullptr ? 0
+           : SDL_GetPerformanceFrequency() / (dataPtr->ultimateUpdateHRC - dataPtr->penultimateUpdateHRC));
+  }
+
+  Uint64 Engine::getDrawTimeUSec(window_ptr window) const {
+    auto dataPtr = getDataByWindow(window);
+
+    return(dataPtr == nullptr ? -1
+           : dataPtr->intraUpdateHRC * 1000000 / SDL_GetPerformanceFrequency());
+  }
+  
   void Engine::requestUpdateAll() {
     for(auto& data : _windowData) {
       data.willUpdate = true;
