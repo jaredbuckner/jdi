@@ -60,20 +60,38 @@ namespace jdi {
     return(_surface);
   }
 
-  bool Sprite::getSrcBBox(SDL_Rect* bboxRect, int element) const {
+  // Assumes everything is non-null
+  bool _adjustForScroll(SDL_Rect* bboxRect,
+                        SDL_Point* scrollPx,
+                        int xLimit, int yLimit) {
+    bboxRect->x += scrollPx->x;
+    bboxRect->y += scrollPx->y;
+    
+    return((bboxRect->x >= 0) && (bboxRect->y >= 0) &&
+           (bboxRect->x + bboxRect->w < xLimit) &&
+           (bboxRect->y + bboxRect->h < yLimit));
+  }
+  
+  bool Sprite::getSrcBBox(SDL_Rect* bboxRect, int element,
+                          SDL_Point* scrollPx) const {
     bool isInRange = (0 <= element && element < _rows * _cols);
     if(isInRange && bboxRect != nullptr) {
       bboxRect->x = (element % _cols) * _w;
       bboxRect->y = (element / _cols) * _h;
       bboxRect->w = _w;
       bboxRect->h = _h;
+
+      if(scrollPx != nullptr) {
+        isInRange = _adjustForScroll(bboxRect, scrollPx, _cols*_w, _rows*_h);
+      }
     }
     return(isInRange);
   }
 
   bool Sprite::selectSrcBBox(SDL_Rect* bboxRect,
                              const SDL_Rect* selRect,
-                             int element) const {
+                             int element,
+                             SDL_Point* scrollPx) const {
     bool isInRange = (0 <= element && element < _rows * _cols);
     if(isInRange) {
       SDL_Rect baseRect { 0, 0, _w, _h };
@@ -81,25 +99,27 @@ namespace jdi {
         isInRange = (SDL_HasIntersection(&baseRect, selRect) == SDL_TRUE);
       } else {
         isInRange = (SDL_IntersectRect(&baseRect, selRect, bboxRect) == SDL_TRUE);
-        if(isInRange) {
+        if(isInRange) {          
           bboxRect->x += (element % _cols) * _w;
           bboxRect->y += (element / _cols) * _h;
+          
+          if(scrollPx != nullptr) {
+            isInRange = _adjustForScroll(bboxRect, scrollPx, _cols*_w, _rows*_h);
+          }
         }
       }
     }
     return(isInRange);
   }
-
-
   
-
   bool Sprite::drawFull(renderer_ptr renderer,
                         const SDL_Point* tgtPoint,
-                        int element) const {
+                        int element,
+                        SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect tgtRect;
     
-    if(!getSrcBBox(&srcRect, element)) { return(false); }
+    if(!getSrcBBox(&srcRect, element, scrollPx)) { return(false); }
     tgtRect = {tgtPoint->x, tgtPoint->y,
                srcRect.w, srcRect.h };
     SDL_RenderCopy(renderer.get(),
@@ -111,10 +131,11 @@ namespace jdi {
 
   bool Sprite::drawFull(renderer_ptr renderer,
                         const SDL_Rect* tgtRect,
-                        int element) const {
+                        int element,
+                        SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     
-    if(!getSrcBBox(&srcRect, element)) { return(false); }
+    if(!getSrcBBox(&srcRect, element, scrollPx)) { return(false); }
     SDL_RenderCopy(renderer.get(),
                    _texture.get(),
                    &srcRect,
@@ -125,11 +146,12 @@ namespace jdi {
   bool Sprite::drawSelect(renderer_ptr renderer,
                           const SDL_Rect* selRect,
                           const SDL_Point* tgtPoint,
-                          int element) const {
+                          int element,
+                          SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect tgtRect;
     
-    if(!selectSrcBBox(&srcRect, selRect, element)) { return(false); }
+    if(!selectSrcBBox(&srcRect, selRect, element, scrollPx)) { return(false); }
     tgtRect = {tgtPoint->x, tgtPoint->y,
                srcRect.w, srcRect.h };
     SDL_RenderCopy(renderer.get(),
@@ -142,10 +164,11 @@ namespace jdi {
   bool Sprite::drawSelect(renderer_ptr renderer,
                           const SDL_Rect* selRect,
                           const SDL_Rect* tgtRect,
-                          int element) const {
+                          int element,
+                          SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     
-    if(!selectSrcBBox(&srcRect, selRect, element)) { return(false); }
+    if(!selectSrcBBox(&srcRect, selRect, element, scrollPx)) { return(false); }
     SDL_RenderCopy(renderer.get(),
                    _texture.get(),
                    &srcRect,
@@ -156,13 +179,14 @@ namespace jdi {
   bool Sprite::drawFullClipped(renderer_ptr renderer,
                                const SDL_Point* tgtPoint,
                                const SDL_Rect* clipRect,
-                               int element) const {
+                               int element,
+                               SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect srcMaskRect;
     SDL_Rect tgtRect;
     SDL_Rect tgtMaskRect;
 
-    if(!getSrcBBox(&srcRect, element)) { return(false); }
+    if(!getSrcBBox(&srcRect, element, scrollPx)) { return(false); }
     tgtRect = {tgtPoint->x, tgtPoint->y,
                srcRect.w, srcRect.h };
     if(!createMaskRects(&srcRect, &tgtRect, clipRect,
@@ -177,12 +201,13 @@ namespace jdi {
   bool Sprite::drawFullClipped(renderer_ptr renderer,
                                const SDL_Rect* tgtRect,
                                const SDL_Rect* clipRect,
-                               int element) const {
+                               int element,
+                               SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect srcMaskRect;
     SDL_Rect tgtMaskRect;
 
-    if(!getSrcBBox(&srcRect, element)) { return(false); }
+    if(!getSrcBBox(&srcRect, element, scrollPx)) { return(false); }
     if(!createMaskRects(&srcRect, tgtRect, clipRect,
                         &srcMaskRect, &tgtMaskRect)) { return(false); }
     SDL_RenderCopy(renderer.get(),
@@ -196,13 +221,14 @@ namespace jdi {
                                  const SDL_Rect* selRect,
                                  const SDL_Point* tgtPoint,
                                  const SDL_Rect* clipRect,
-                                 int element) const {
+                                 int element,
+                                 SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect srcMaskRect;
     SDL_Rect tgtRect;
     SDL_Rect tgtMaskRect;
 
-    if(!selectSrcBBox(&srcRect, selRect, element)) { return(false); }
+    if(!selectSrcBBox(&srcRect, selRect, element, scrollPx)) { return(false); }
     tgtRect = {tgtPoint->x, tgtPoint->y,
                srcRect.w, srcRect.h };
     if(!createMaskRects(&srcRect, &tgtRect, clipRect,
@@ -218,12 +244,13 @@ namespace jdi {
                                  const SDL_Rect* selRect,
                                  const SDL_Rect* tgtRect,
                                  const SDL_Rect* clipRect,
-                                 int element) const {
+                                 int element,
+                                 SDL_Point* scrollPx) const {
     SDL_Rect srcRect;
     SDL_Rect srcMaskRect;
     SDL_Rect tgtMaskRect;
 
-    if(!selectSrcBBox(&srcRect, selRect, element)) { return(false); }
+    if(!selectSrcBBox(&srcRect, selRect, element, scrollPx)) { return(false); }
     if(!createMaskRects(&srcRect, tgtRect, clipRect,
                         &srcMaskRect, &tgtMaskRect)) { return(false); }
     SDL_RenderCopy(renderer.get(),
