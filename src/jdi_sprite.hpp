@@ -31,8 +31,15 @@ namespace jdi {
     texture_ptr getTexture() const;
     texture_ptr generateTexture(renderer_ptr renderer);
 
+    int getElementWidth() const;
+    int getElementHeight() const;
+    int getElementRows() const;
+    int getElementCols() const;
     int getElementCount() const;
 
+    int getElementIdx(int row, int col) const;
+    int getWrappedElementIdx(int row, int col) const;
+    
     // Returns true if element is in range and scroll does not clip out of
     // range.  Updates bboxRect, if non-null
     bool getSrcBBox(SDL_Rect* bboxRect,
@@ -125,10 +132,37 @@ namespace jdi {
     return(_texture);
   }
 
+  inline int Sprite::getElementWidth() const {
+    return(_surface == nullptr ? 0 : _w);
+  }
+  
+  inline int Sprite::getElementHeight() const {
+    return(_surface == nullptr ? 0 : _h);
+  }
+  
+  inline int Sprite::getElementRows() const {
+    return(_surface == nullptr ? 0 : _rows);
+  }
+  
+  inline int Sprite::getElementCols() const {
+    return(_surface == nullptr ? 0 : _cols);
+  }
+  
   inline int Sprite::getElementCount() const {
     return(_surface == nullptr ? 0 : _rows * _cols);
   }
+
+  inline int Sprite::getElementIdx(int row, int col) const {
+    return(_surface == nullptr ? 0
+           : row * _cols + col);
+  }
   
+  inline int Sprite::getWrappedElementIdx(int row, int col) const {
+    return(_surface == nullptr ? 0
+           : (row % _rows) * _cols + (col % _cols));
+  }
+           
+    
 } // end namespace jdi
 
     
