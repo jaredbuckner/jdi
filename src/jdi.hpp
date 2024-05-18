@@ -6,6 +6,7 @@
 #ifndef _JDI_HPP_
 #define _JDI_HPP_
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <vector>

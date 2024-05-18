@@ -45,9 +45,9 @@ namespace jdi {
     Uint32       _ticksPerFrame;
     SDL_TimerID  _animateTimer;
 
-    std::string _basePath;
-    std::string _prefPath;
-
+    std::filesystem::path _basePath;
+    std::filesystem::path _prefPath;
+    
     void addJoystick(Uint32 deviceIndex);
     void removeJoystick(Uint32 instanceID);
     
@@ -94,8 +94,8 @@ namespace jdi {
 
     void registerApp(const char* org,
                      const char* app);
-    const char* getBasePath() const;
-    const char* getPrefPath() const;
+    const std::filesystem::path& getBasePath() const;
+    const std::filesystem::path& getPrefPath() const;
     
     bool hasWindows() const;
     bool hasWindow(window_ptr window) const;
@@ -164,8 +164,8 @@ namespace jdi {
   
   inline bool Engine::areJoysticksEnabled() const { return(_joysticksEnabled); }
   
-  inline const char* Engine::getBasePath() const { return(_basePath.c_str()); }  
-  inline const char* Engine::getPrefPath() const { return(_prefPath.c_str()); }
+  inline const std::filesystem::path& Engine::getBasePath() const { return(_basePath); }  
+  inline const std::filesystem::path& Engine::getPrefPath() const { return(_prefPath); }
   
   inline bool Engine::hasWindow(window_ptr window) const {
     auto dataPtr = getDataByWindow(window);
