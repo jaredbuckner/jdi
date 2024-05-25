@@ -39,6 +39,9 @@ namespace jdi {
 
     int getElementIdx(int row, int col) const;
     int getWrappedElementIdx(int row, int col) const;
+
+    bool getElementRowCol(int& row, int& col, int element) const;
+    bool getWrappedElementRowCol(int& row, int& col, int element) const;
     
     // Returns true if element is in range and scroll does not clip out of
     // range.  Updates bboxRect, if non-null
@@ -161,7 +164,30 @@ namespace jdi {
     return(_surface == nullptr ? 0
            : (row % _rows) * _cols + (col % _cols));
   }
-           
+  
+  inline bool Sprite::getElementRowCol(int& row, int& col,
+                                       int element) const {
+    if(_surface == nullptr) {
+      return(false);
+    } else {
+      row = element / _cols;
+      col = element % _cols;
+      return(row < _rows);
+    }
+  }
+  
+  inline bool Sprite::getWrappedElementRowCol(int& row, int& col,
+                                              int element) const {
+    if(_surface == nullptr) {
+      return(false);
+    } else {
+      row = (element / _cols) % _rows;
+      col = (element % _cols);
+      return(true);
+    }
+  }
+  
+    
     
 } // end namespace jdi
 
