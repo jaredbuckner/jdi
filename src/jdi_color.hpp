@@ -63,8 +63,25 @@ namespace jdi {
     static Color aluminum4();
     static Color aluminum5();
 
+    static Uint8 alphaInterp(Uint8 a, Uint8 alpha,
+                             Uint8 b, Uint8 beta);
+    static Uint8 scaledMul(Uint8 a, Uint8 b);
+
   }; // end class Color
 
+
+  inline Uint8 Color::alphaInterp(Uint8 a, Uint8 alpha,
+                                  Uint8 b, Uint8 beta) {
+    Uint16 aa = Uint16(a) * Uint16(alpha);
+    Uint16 bb = Uint16(b) * Uint16(beta);
+    Uint16 cc = (aa + bb) / 255;
+    return(cc);
+  }
+
+  inline Uint8 Color::scaledMul(Uint8 a, Uint8 b) {
+    Uint16 cc = Uint16(a) * Uint16(b) / 255;
+    return(cc);
+  }
 
   // Comparisons
   inline bool operator==(const Color& a,
@@ -91,6 +108,61 @@ namespace jdi {
   inline bool operator>(const Color& a, const Color& b) { return(b < a); }
   inline bool operator<=(const Color& a, const Color& b) { return(!(b < a)); }
   inline bool operator>=(const Color& a, const Color& b) { return(!(a < b)); }
+
+  ////
+  // Operations
+  ////
+  
+  // Compose  (b over a)
+  inline Color& operator+=(Color& a, const Color& b) {
+    Uint8 alpha = b.a;
+    Uint8 beta  = 255 - alpha;
+    
+    a.r = Color::alphaInterp(b.r, alpha, a.r, beta);
+    a.g = Color::alphaInterp(b.g, alpha, a.g, beta);
+    a.b = Color::alphaInterp(b.b, alpha, a.b, beta);
+    a.a = Color::alphaInterp(255, alpha, a.a, beta);
+    
+    return(a);
+  }
+
+  inline Color operator+(const Color& a, const Color& b) {
+    Color reply = a;
+    reply += b;
+    return(reply);
+  }
+
+  // Multiply
+  inline Color& operator*=(Color& a, const Color& b) {
+    a.r = Color::scaledMul(a.r, b.r);
+    a.g = Color::scaledMul(a.g, b.g);
+    a.b = Color::scaledMul(a.b, b.b);
+    a.a = Color::scaledMul(a.a, b.a);
+    
+    return(a);
+  }
+
+  inline Color operator*(const Color& a, const Color& b) {
+    Color reply = a;
+    reply *= b;
+    return(reply);
+  }
+
+  // Screen
+  inline Color& operator/=(Color& a, const Color& b) {
+    a.r = 255 - Color::scaledMul(255 - a.r, 255 - b.r);
+    a.g = 255 - Color::scaledMul(255 - a.g, 255 - b.g);
+    a.b = 255 - Color::scaledMul(255 - a.b, 255 - b.b);
+    a.a = 255 - Color::scaledMul(255 - a.a, 255 - b.a);
+
+    return(a);
+  }
+
+  inline Color operator/(const Color& a, const Color& b) {
+    Color reply = a;
+    reply /= b;
+    return(reply);
+  }
   
   inline Color::Color() : r(0), g(0), b(0), a(255) {}
 
