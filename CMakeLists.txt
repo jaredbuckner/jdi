@@ -46,4 +46,4 @@ foreach(test_src ${TEST_SOURCES})
 endforeach()
 
 enable_testing()
-add_test(NAME EngineTest COMMAND engine_test)
+add_test(NAME EngineTest COMMAND engine_test WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
